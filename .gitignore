@@ -1,0 +1,10 @@
+# Project Source Control Ingnores
+
+# Compiled Python
+*.pyc
+
+# Development Tools
+*.idea
+
+# Testing/Development Files
+/tests
