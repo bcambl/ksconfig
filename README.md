@@ -30,7 +30,8 @@ linux net.ifnames=0 biosdevname=0 ks=<path-to-kickstart>
 ### Screenshots
 
 ##### Server Location
-Specify server physical location and domain name
+Specify pre-defined server location/domain. The 'custom' option will prompt 
+user for a domain and a short description.
  
 (enabled/disabled in kspre.py settings if not needed)
 
@@ -44,7 +45,7 @@ Second interface is optional. Disable/enable via kspre settings
 
 ##### Validate IP's
 
-Do not allow CIDR or invalid IP's
+Do not allow CIDR notation, invalid IP's, or Blank IP fields
 
 ![Select available disk](screenshots/ip_validations.png)
 
@@ -68,7 +69,7 @@ Modify partitions of 'standard partitioning' scheme
 
 ##### Accept configuration or Re-Configure
 
-(Re-configure re-enables IP validaions if disabled prior)
+The 're-configure' option will enable IP validaions if previously skipped
 
 ![Select available disk](screenshots/confirm_or_re-config.png)
 

@@ -13,7 +13,7 @@ See README.md for more information.
 __author__ = 'Blayne Campbell'
 __copyright__ = 'Copyright 2015, Blayne Campbell'
 __license__ = 'BSD'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 # Settings Begin ##############################################################
 DEBUG = False
@@ -79,9 +79,10 @@ def set_hostname():
     with open('/mnt/sysimage/etc/hosts', 'a') as hostsfile:
         hostsfile.write('%s\t%s\n' % (server_config['pripaddr'],
                                       server_config['hostname']))
-        if server_config['second_interface']:
+        if 'secondipaddr' in server_config:
             hostsfile.write('%s\t%s\n' % (server_config['secondipaddr'],
-                                          server_config['hostname']))
+                                          server_config['hostname'] +
+                                          server_config['second_pfix']))
 
 
 def findmac(interface):
@@ -172,7 +173,7 @@ def main():
                         server_config['pripaddr'],
                         server_config['pripmask'],
                         server_config['pripgate'])
-    if server_config['second_interface']:
+    if 'secondipaddr' in server_config:
         configure_interface('eth1',
                             server_config['secondipaddr'],
                             server_config['secondipmask'],

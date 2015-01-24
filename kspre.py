@@ -17,7 +17,7 @@ See README.md for more information.
 __author__ = 'Blayne Campbell'
 __copyright__ = 'Copyright 2015, Blayne Campbell'
 __license__ = 'BSD'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 # Settings Begin ##############################################################
 
@@ -74,21 +74,24 @@ logvol swap  --fstype="swap" --size={swap_size} --name=lv_swap --vgname=vg00
 # Enable/Disable IP Validation
 ip_validation = True  # True/False
 
-# Secondary Network Interface
+# Prompt for secondary network interface configuration (eth1)
 second_interface = True  # True/False
+# hostname 'postfix' for second NIC for adding second IP to host file
+second_pfix = '-nic2'
 
 # Server Locations (Optional) ###
-# Provide a server location note and domain information
+# Provide a server location/domain information
 locations = True  # Toggle location data
-server_locations = [('Location 1 Street Address',
+server_locations = [('Location/Domain 1',
                     ('location1.example.com',
                      'Location 1 expanded description')),
-                    ('Location 2 Street Address',
+                    ('Location/Domain 2',
                      ('location2.example.com',
                       'Location 2 expanded description')),
-                    ('Location 3 Street Address',
+                    ('Location/Domain 3',
                      ('location3.example.com',
-                      'Location 3 expanded description'))]
+                      'Location 3 expanded description')),
+                    ('Custom Location/Domain', ('custom', 'custom'))]
 
 # Settings End ################################################################
 
@@ -187,6 +190,7 @@ class ServerObject:
             self.secondipaddr = ''  # Second Interface IP Address
             self.secondipmask = ''  # Second Interface IP Netmask
             self.secondipgate = ''  # Second Interface IP Gateway
+            self.second_pfix = second_pfix  # Second Interface hostname postfix
         self.osversion = os_version()
         self.serverarch = platform.processor()
         self.servertype = dmidec('system-product-name')
@@ -208,8 +212,8 @@ class ServerObject:
     def validate_ip(self):
         self.invalids = []  # Empty the invalid IP list
         for i, v in vars(self).iteritems():
-            if i in ('hostname', 'invalids', 'osversion', 'builddate',
-                     'serverarch', 'servertype', 'domain', 'location'):
+            if i in ('hostname', 'invalids', 'location', 'builddate', 'domain',
+                     'serverarch', 'servertype', 'osversion', 'second_pfix'):
                 continue  # Skip validation for non-ip keys
             if val(v):
                 continue  # IPv4 validation tests passed
@@ -218,7 +222,7 @@ class ServerObject:
         if self.invalids:
             self.invalids = filter(None, self.invalids)
             if not self.invalids:
-                self.invalids.append("No IP Configuration Provided")
+                self.invalids.append("Blank IP Address Field(s) Detected")
             return self.invalids
 
     def write_servercfg(self):
@@ -317,8 +321,15 @@ class PreConfig:
                                        server_locations, buttons=['Ok'],
                                        help=None)
         if location[0] != 'cancel':
-            svrobj.domain = location[1][0]
-            svrobj.location = location[1][1]
+            if location[1][0] == 'custom':
+                custom_loc = EntryWindow(self.screen, 'Custom Location/Domain',
+                                         '', ['Domain', 'Description'],
+                                         buttons=['ok'], help=None)
+                svrobj.domain = custom_loc[1][0]
+                svrobj.location = custom_loc[1][1]
+            else:
+                svrobj.domain = location[1][0]
+                svrobj.location = location[1][1]
 
     def get_network(self, svrobj):
         """ Prompt for Hostname and network IP's
@@ -359,7 +370,9 @@ class PreConfig:
         if svrobj.invalids:
             invalid_addr = ''
             for ip in svrobj.invalids:
-                if '/' in ip:
+                if "Blank IP Address Field(s) Detected" in ip:
+                    invalid_addr += "%s " % ip
+                elif '/' in ip:
                     invalid_addr += '%s (remove cidr notation)\n' % ip
                 else:
                     invalid_addr += '%s (invalid IP address)\n' % ip
@@ -384,7 +397,7 @@ Default Gateway --------> {pripgate}
 Primary DNS ------------> {primedns}
 Secondary DNS-----------> {secondns}
 """
-        if second_interface:
+        if second_interface and svrobj.secondipaddr != '':
             serverinfo_tpl += """
 2nd Interface IP -------> {secondipaddr}
 2nd Interface Subnet ---> {secondipmask}
