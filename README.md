@@ -19,12 +19,13 @@ distributions.
 2) View the sample file to include these scripts in your %pre and %post sections 
 of your kickstart file.
 
-3) Add *net.ifnames=0* and *biosdevname=0* to your **boot:** along with your 
-kickstart file path. This ensures that traditional interface names are used. 
-ie: eth0, eth1, etc.
+3) Add *net.ifnames=0*, *biosdevname=0*, and *inst.geoloc=0* to your **boot:** along with your
+kickstart file path. 
+
+This ensures that traditional interface names are used. ie: eth0, eth1, etc.
 
 ```
-linux net.ifnames=0 biosdevname=0 ks=<path-to-kickstart>
+linux net.ifnames=0 biosdevname=0 inst.geoloc=0 ks=<path-to-kickstart>
 ```
 
 ### Screenshots

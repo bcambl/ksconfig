@@ -79,10 +79,11 @@ def set_hostname():
     with open('/mnt/sysimage/etc/hosts', 'a') as hostsfile:
         hostsfile.write('%s\t%s\n' % (server_config['pripaddr'],
                                       server_config['hostname']))
-        if 'secondipaddr' in server_config:
-            hostsfile.write('%s\t%s\n' % (server_config['secondipaddr'],
-                                          server_config['hostname'] +
-                                          server_config['second_pfix']))
+        if server_config['second_interface']:
+            if server_config['secondipaddr']:
+                hostsfile.write('%s\t%s\n' % (server_config['secondipaddr'],
+                                              server_config['hostname'] +
+                                              server_config['second_pfix']))
 
 
 def findmac(interface):
@@ -173,11 +174,12 @@ def main():
                         server_config['pripaddr'],
                         server_config['pripmask'],
                         server_config['pripgate'])
-    if 'secondipaddr' in server_config:
-        configure_interface('eth1',
-                            server_config['secondipaddr'],
-                            server_config['secondipmask'],
-                            server_config['secondipgate'])
+    if server_config['second_interface']:
+        if server_config['secondipaddr']:
+            configure_interface('eth1',
+                                server_config['secondipaddr'],
+                                server_config['secondipmask'],
+                                server_config['secondipgate'])
 
 
 if __name__ == "__main__":
