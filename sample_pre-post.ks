@@ -1,3 +1,6 @@
+# Include disk partitioning
+%include /tmp/disk.part
+
 %pre
 
 # Change to tty1
