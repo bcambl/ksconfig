@@ -160,6 +160,63 @@ def val(ip):
         return True
 
 
+def get_gateway(ip, nm):
+    result = {}
+
+    def get_ip_value(ipaddr):
+        """
+        Calculates the binary value of the ip addresse
+        """
+        ipaddr = ipaddr.split('.')
+        value = 0
+        for i in range(len(ipaddr)):
+            value = (value | (int(ipaddr[i]) << (8 * (3-i))))
+        return value
+
+    def get_ip_notation(value):
+        """
+        Calculates the notation of the ip addresse given its value
+        """
+        notat = []
+        for i in range(4):
+                shift = 255 << (8 * (3-i))
+                part = value & shift
+                part = (part >> (8 * (3-i)))
+                notat.append(str(part))
+        notat = '.'.join(notat)
+        return notat
+
+    def get_net_part(ipaddr, subnet):
+        ipaddr = get_ip_value(ipaddr)
+        subnet = get_ip_value(subnet)
+        netpart = ipaddr & subnet
+        netpart = get_ip_notation(netpart)
+        return netpart
+
+    def get_cidr_subnet(cidr):
+        """
+        Calculates the Subnet based on the CIDR
+        """
+        subn = 4294967295 << (32 - int(cidr))  # 4294967295 = all bits set to 1
+        subn = (subn % 4294967296)  # round it back to be 4 bytes
+        subn = get_ip_notation(subn)
+        return subn
+    try:
+        if len(nm) == 2:
+            nm = get_cidr_subnet(nm)
+            result['subnet'] = nm
+            defaultgw = get_net_part(ip, nm)
+        else:
+            defaultgw = get_net_part(ip, nm)
+            result['subnet'] = nm
+        defaultgw = get_ip_value(defaultgw) + 1
+        defaultgw = get_ip_notation(defaultgw)
+        result['gateway'] = defaultgw
+    except ValueError:
+        result = {'subnet': nm, 'gateway': ''}
+    return result
+
+
 def dmidec(keyword):
     d = subprocess.Popen(['dmidecode', '-s', '%s' % keyword],
                          stdout=subprocess.PIPE).stdout.readlines()
@@ -337,7 +394,7 @@ class PreConfig:
         network_fields = [("Hostname", "%s" % svrobj.hostname),
                           ('', BlankLabel('')),
                           ("IP Address", "%s" % svrobj.pripaddr),
-                          ("Subnet", "%s" % svrobj.pripmask),
+                          ("Subnet/CIDR", "%s" % svrobj.pripmask),
                           ("Default Gateway", "%s" % svrobj.pripgate),
                           ("Primary DNS", "%s" % svrobj.primedns),
                           ("Secondary DNS", "%s" % svrobj.secondns)]
@@ -345,7 +402,7 @@ class PreConfig:
             network_fields.append(('', BlankLabel('')))
             network_fields.append(("2nd Interface IP", "%s" %
                                    svrobj.secondipaddr))
-            network_fields.append(("2nd Interface Subnet", "%s" %
+            network_fields.append(("2nd Interface Subnet/CIDR", "%s" %
                                    svrobj.secondipmask))
             network_fields.append(("2nd Interface Gateway", "%s" %
                                    svrobj.secondipgate))
@@ -363,6 +420,14 @@ class PreConfig:
                 svrobj.secondipaddr = info[1][8]
                 svrobj.secondipmask = info[1][9]
                 svrobj.secondipgate = info[1][10]
+                if not svrobj.secondipgate or len(svrobj.secondipmask) == 2:
+                    find_gw = get_gateway(info[1][8], info[1][9])
+                    svrobj.secondipmask = find_gw['subnet']
+                    svrobj.secondipgate = find_gw['gateway']
+        if not svrobj.pripgate or len(svrobj.pripmask) == 2:
+            find_gw = get_gateway(info[1][2], info[1][3])
+            svrobj.pripmask = find_gw['subnet']
+            svrobj.pripgate = find_gw['gateway']
 
     def show_invalid(self, svrobj):
         """ Display IPv4 addresses that did not pass validations
