@@ -35,6 +35,9 @@ default_var = 4000
 default_varlog = 4000
 default_yumcache = 2000
 
+# Allowed overhead used for calculating available disk vs required space.
+disk_overhead_pct = 0.01  # 0.01 = 1%
+
 # Disk Partitioning template ###
 # Include this in kickstart file with the following syntax:
 # %include /tmp/disk.part
@@ -315,6 +318,7 @@ class DiskObject:
                 continue  # Exclude from validation
             else:
                 self.required_mb += int(i[1])
+        self.required_mb += int(self.required_mb * disk_overhead_pct)
         if self.required_mb < self.avail_mb:
             self.diskdiff = int(self.avail_mb) - int(self.required_mb)
             return False
