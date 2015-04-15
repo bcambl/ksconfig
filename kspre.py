@@ -202,7 +202,7 @@ def get_gateway(ip, nm):
         subn = get_ip_notation(subn)
         return subn
     try:
-        if len(nm) == 2:
+        if len(nm) <= 2 and int(nm) in range(0, 33):
             nm = get_cidr_subnet(nm)
             result['subnet'] = nm
             defaultgw = get_net_part(ip, nm)
