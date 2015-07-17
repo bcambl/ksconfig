@@ -5,6 +5,7 @@ from time import localtime, strftime
 import subprocess
 import platform
 import json
+import os
 import re
 
 """
@@ -301,22 +302,6 @@ class ServerObject:
                 self.secondipmask = '255.255.255.0'
                 self.secondipgate = '192.168.122.1'
 
-    def validate_ip(self):
-        self.invalids = []  # Empty the invalid IP list
-        for i, v in vars(self).iteritems():
-            if i in ('hostname', 'invalids', 'location', 'builddate', 'domain',
-                     'serverarch', 'servertype', 'osversion', 'second_pfix'):
-                continue  # Skip validation for non-ip keys
-            if val(v):
-                continue  # IPv4 validation tests passed
-            else:
-                self.invalids.append(v)
-        if self.invalids:
-            self.invalids = filter(None, self.invalids)
-            if not self.invalids:
-                self.invalids.append("Blank IP Address Field(s) Detected")
-            return self.invalids
-
     def write_servercfg(self):
         """ Write servercfg.json file
         """
@@ -470,6 +455,22 @@ class PreConfig:
             find_gw = get_gateway(info[1][2], info[1][3])
             svrobj.pripmask = find_gw['subnet']
             svrobj.pripgate = find_gw['gateway']
+
+    def validate_ip(self, svrobj):
+        svrobj.invalids = []  # Empty the invalid IP list
+        for i, v in vars(svrobj).items():
+            if i in ('pripaddr', 'pripmask', 'pripgate', 'primedns',
+                     'secondns', 'secondipaddr', 'secondipmask',
+                     'secondipgate'):
+                if val(v):
+                    continue  # IPv4 validation tests passed
+                else:
+                    svrobj.invalids.append(v)
+        if svrobj.invalids:
+            svrobj.invalids = filter(None, svrobj.invalids)
+            if not svrobj.invalids:
+                svrobj.invalids.append("Blank IP Address Field(s) Detected")
+            return svrobj.invalids
 
     def show_invalid(self, svrobj):
         """ Display IPv4 addresses that did not pass validations
@@ -629,7 +630,7 @@ def main(config, server, disk):
         if locations:
             config.get_location(server)
         config.get_network(server)
-        while server.validate_ip() and ip_validation:
+        while config.validate_ip(server) and ip_validation:
             config.show_invalid(server)
             if ip_validation:
                 config.get_network(server)
