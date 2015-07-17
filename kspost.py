@@ -76,6 +76,8 @@ def set_hostname():
     """
     with open('/mnt/sysimage/etc/sysconfig/network', 'w') as networkfile:
         networkfile.write('HOSTNAME=%s\n' % server_config['hostname'])
+    with open('/mnt/sysimage/etc/hostname', 'w') as hostnamefile:  # Req for 7+
+        hostnamefile.write('%s\n' % server_config['hostname'])
     with open('/mnt/sysimage/etc/hosts', 'a') as hostsfile:
         hostsfile.write('%s\t%s\n' % (server_config['pripaddr'],
                                       server_config['hostname']))
