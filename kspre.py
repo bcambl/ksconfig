@@ -406,6 +406,12 @@ class PreConfig:
         self.screen.refresh()
         self.complete = 0
 
+    def no_disk_warn(self):
+        ButtonChoiceWindow(self.screen, "NO DISK WARNING",
+                           "Please configure disk or array before OS install",
+                           buttons=['Exit'],
+                           help=None)
+
     def get_location(self, svrobj):
         """ Prompt for server location specified by settings
         """
@@ -645,8 +651,12 @@ def main(config, server, disk):
 
 if __name__ == "__main__":
     pre_config = PreConfig()
-    server_config = ServerObject()
-    disk_config = DiskObject()
-    main(pre_config, server_config, disk_config)
-
-    pre_config.exit()
+    if not disk_info():
+        # If no disks found, warn user and exit
+        pre_config.no_disk_warn()
+        pre_config.exit()
+    else:
+        server_config = ServerObject()
+        disk_config = DiskObject()
+        main(pre_config, server_config, disk_config)
+        pre_config.exit()
