@@ -96,18 +96,17 @@ def set_hostname():
 
 
 def findmac(interface):
-    """ Find MAC address of interface via origional ifcfg file
+    """ Helper function to retrieve the MAC address for a given interface from
+    the server configuration object.
     :param interface: Device ie: eth0
-    :return: MAC Address of device
+    :return: MAC Address of device or None
     """
-    path = '/mnt/sysimage/etc/sysconfig/network-scripts'
-    origional = open(path + '/ifcfg-%s.orig' % interface, 'r')
-    origional = origional.readlines()
-    for line in origional:
-        if 'HWADDR' in line:
-            mac = re.search('^HWADDR=(.*)$', line)
-            mac = mac.group(1)
-            return mac.upper()
+    try:
+        mac = server_config['interfaces'][str(interface)]['perm_address']
+        mac = mac.upper()
+    except KeyError:
+        mac = None
+    return mac
 
 
 def configure_resolv():
