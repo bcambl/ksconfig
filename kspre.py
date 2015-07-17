@@ -142,7 +142,7 @@ def disk_info():
             results.append(('%s - %.1f GB' % (d.group(1),
                                               convert_size(size, 'BLK', 'GB')),
                             (d.group(1), convert_size(size, 'BLK', 'MB'))))
-    return results
+    return sorted(results)
 
 
 def val(ip):
