@@ -98,6 +98,11 @@ server_locations = [('Location/Domain 1',
 
 # Settings End ################################################################
 
+try:
+    from subprocess import DEVNULL  # py3k
+except ImportError:
+    DEVNULL = open(os.devnull, 'wb')
+
 
 def convert_size(value, in_format, out_format):
     """ Converts disk size to specified format
@@ -226,6 +231,32 @@ def dmidec(keyword):
     return d[0].strip('\n')
 
 
+def get_interfaces():
+    """ Return interface(s) by querying /proc/net/dev and /sys/class/net
+    :return: dict = {'interface': {'perm_address': '00:00:00:00:00:00'}
+    """
+    procnetdev = subprocess.Popen(['cat', '/proc/net/dev'],
+                                  stdout=subprocess.PIPE).stdout.readlines()
+    interface_list = []
+    valid_interfaces = {}
+    for i in procnetdev:
+        iface = re.match(r'^(.*):.*$', i)
+        if iface:
+            interface_found = iface.group(1).strip()
+            if interface_found != 'lo':
+                interface_list.append(interface_found)
+    for interface in interface_list:
+        class_path = '/sys/class/net/%s/address' % interface
+        if os.path.exists(class_path):
+            mac_addr = subprocess.Popen(('cat', class_path),
+                                        stdout=subprocess.PIPE, stderr=DEVNULL)
+            mac_addr = mac_addr.communicate()[0]
+            valid_interfaces[interface] = {'perm_address': mac_addr.strip()}
+        else:
+            valid_interfaces[interface] = {'perm_address': ''}
+    return valid_interfaces
+
+
 def os_version():
     release = subprocess.Popen(['uname', '-a'], stdout=subprocess.PIPE)
     release = release.stdout.readlines()
@@ -241,6 +272,7 @@ class ServerObject:
     def __init__(self):
         self.builddate = strftime("%a %d %b %Y %H:%M:%S", localtime())
         self.hostname = ''  # Hostname
+        self.interfaces = get_interfaces()
         self.pripaddr = ''  # Primary IP Address
         self.pripmask = ''  # Primary IP Netmask
         self.pripgate = ''  # Primary IP Gateway
