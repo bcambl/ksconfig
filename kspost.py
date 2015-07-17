@@ -64,9 +64,16 @@ disk_config = json.load(open('/tmp/disk.json', 'r'))
 def copy_preconfig():
     """ Copy Configuration files created by %pre script
     """
-    shutil.copy('/tmp/servercfg.json', '/mnt/sysimage/tmp/')
-    shutil.copy('/tmp/disk.json', '/mnt/sysimage/tmp/')
-    shutil.copy('/tmp/disk.part', '/mnt/sysimage/tmp/')
+    copy_tasks = [
+        ['/tmp/servercfg.json', '/mnt/sysimage/tmp/'],
+        ['/tmp/disk.json', '/mnt/sysimage/tmp/'],
+        ['/tmp/disk.part', '/mnt/sysimage/tmp/']
+    ]
+    for source, destination in copy_tasks:
+        try:
+            shutil.copy(source, destination)
+        except IOError:
+            pass  # TODO: Add logging
 
 
 def set_hostname():
